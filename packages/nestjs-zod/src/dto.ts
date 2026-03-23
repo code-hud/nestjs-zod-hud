@@ -11,7 +11,7 @@ export interface ZodDto<
   TSchema extends UnknownSchema = UnknownSchema,
   TCodec extends boolean = boolean
 > {
-  new (): ReturnType<TSchema['parse']>
+  new(): ReturnType<TSchema['parse']>
   isZodDto: true
   schema: TSchema
   codec: TCodec
@@ -36,12 +36,12 @@ export function createZodDto<
 
     static get Output() {
       assert('_zod' in schema, 'Output DTOs can only be created from zod v4 schemas')
-      
+
       class AugmentedZodDto {
         public static readonly isZodDto = true
         public static readonly schema = schema
         public static readonly [ioSymbol] = "output"
-    
+
         public static create(input: unknown) {
           return this.schema.parse(input)
         }
@@ -64,11 +64,11 @@ export function createZodDto<
   return AugmentedZodDto as unknown as ZodDto<TSchema, TCodec>
 }
 
-function openApiMetadataFactory({ 
-  schema, 
+function openApiMetadataFactory({
+  schema,
   io,
-}: { 
-  schema: UnknownSchema | z3.ZodTypeAny | ($ZodType & { parse: (input: unknown) => unknown; }), 
+}: {
+  schema: UnknownSchema | z3.ZodTypeAny | ($ZodType & { parse: (input: unknown) => unknown; }),
   io: 'input' | 'output',
 }) {
   if (!('_zod' in schema) && '_def' in schema && io === 'output') {
@@ -106,10 +106,10 @@ function openApiMetadataFactory({
     },
     $defs,
   } : {
-    ...generatedJsonSchema,
-    $defs,
-  };
-  
+      ...generatedJsonSchema,
+      $defs,
+    };
+
   const { hasRefs, hasNull, hasConst } = getSchemaMetadata(jsonSchema);
 
   let properties: Record<string, unknown> = {};
@@ -130,7 +130,7 @@ function openApiMetadataFactory({
       // An empty string is not a valid value for `type` as per jsonSchema
       // standards, but we clean this up and remove this field in
       // `cleanupOpenApiDoc`
-      type: propertySchema.type || '', 
+      type: propertySchema.type || '',
     };
 
     if (hasConst) {
@@ -222,11 +222,15 @@ function openApiMetadataFactory({
 function generateJsonSchema(schema: z3.ZodTypeAny | ($ZodType & { parse: (input: unknown) => unknown; }), io: 'input' | 'output') {
   const generatedJsonSchema = '_zod' in schema ? toJSONSchema(schema, {
     io,
-    override: ({ jsonSchema }) => {
-        if (io === 'output' && 'id' in jsonSchema) {
-            jsonSchema.id = `${jsonSchema.id}_Output`;
-        }
-    } 
+    unrepresentable: "any",
+    override: ({ zodSchema, jsonSchema }) => {
+      if (zodSchema instanceof zod_v4.ZodDate) {
+        jsonSchema.type = "string";
+        jsonSchema.format = "date-time";
+      }
+
+      if (io === "output" && "id" in jsonSchema) jsonSchema.id = `${jsonSchema.id}_Output`;
+    }
   }) : zodV3ToOpenAPI(schema)
 
   const $defs = ('$defs' in generatedJsonSchema && generatedJsonSchema.$defs) ? generatedJsonSchema.$defs : undefined;
@@ -293,7 +297,7 @@ function generateJsonSchema(schema: z3.ZodTypeAny | ($ZodType & { parse: (input:
  * }
  * ```
  */
-function fixRefsToPointById(rootSchema: JSONSchema.JSONSchema, $defs:  Record<string, JSONSchema.JSONSchema> | undefined) {
+function fixRefsToPointById(rootSchema: JSONSchema.JSONSchema, $defs: Record<string, JSONSchema.JSONSchema> | undefined) {
   return walkJsonSchema(rootSchema, (schema) => {
     if (schema.$ref && schema.$ref.startsWith('#/$defs/')) {
       const defKey = schema.$ref.replace('#/$defs/', '');
@@ -304,7 +308,7 @@ function fixRefsToPointById(rootSchema: JSONSchema.JSONSchema, $defs:  Record<st
 
     }
     return schema;
-  }, { clone: true});
+  }, { clone: true });
 }
 
 function getSchemaMetadata(jsonSchema: JSONSchema.BaseSchema) {
