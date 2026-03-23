@@ -1,0 +1,76 @@
+name: Release to GitHub
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to release (e.g., 1.2.3)'
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  publish-github:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: Use Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'pnpm'
+
+      - run: pnpm install
+
+      - name: Build z
+        run: cd packages/z && pnpm build
+
+      - name: Build nestjs-zod
+        run: cd packages/nestjs-zod && pnpm build
+
+      - name: Extract version from release
+        id: version-from-release
+        if: github.event_name == 'release'
+        uses: olegtarasov/get-tag@v2.1.3
+        with:
+          tagRegex: 'v(.*)'
+
+      - name: Set version
+        uses: reedyuk/npm-version@1.1.1
+        with:
+          version: ${{ github.event_name == 'release' && steps.version-from-release.outputs.tag || github.event.inputs.version }}
+          package: 'packages/nestjs-zod'
+
+      - name: Pack tarball
+        id: pack
+        run: |
+          cd packages/nestjs-zod
+          TARBALL=$(npm pack)
+          echo "tarball=$TARBALL" >> $GITHUB_OUTPUT
+          echo "path=packages/nestjs-zod/$TARBALL" >> $GITHUB_OUTPUT
+
+      - name: Create GitHub Release (workflow_dispatch only)
+        if: github.event_name == 'workflow_dispatch'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release create "v${{ github.event.inputs.version }}" \
+            --title "v${{ github.event.inputs.version }}" \
+            --generate-notes
+
+      - name: Upload tarball to GitHub Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TAG=${{ github.event_name == 'release' && github.event.release.tag_name || format('v{0}', github.event.inputs.version) }}
+          gh release upload "$TAG" "${{ steps.pack.outputs.path }}" --clobber

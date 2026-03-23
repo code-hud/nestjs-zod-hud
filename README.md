@@ -66,6 +66,30 @@ This command runs a codemod that adds the validation pipe, serialization interce
 
 Alternatively, you can follow the manual setup steps below
 
+### Installing from a GitHub Release
+
+If you are using a fork of this repository (e.g., a private customized version), you can install directly from a GitHub Release tarball instead of from npm:
+
+```bash
+npm install https://github.com/code-hud/nestjs-zod-hud/releases/download/v<VERSION>/nestjs-zod-<VERSION>.tgz
+```
+
+For example, to install version `1.2.3`:
+```bash
+npm install https://github.com/code-hud/nestjs-zod-hud/releases/download/v1.2.3/nestjs-zod-1.2.3.tgz
+```
+
+Or pin it in your `package.json`:
+```json
+{
+  "dependencies": {
+    "nestjs-zod": "https://github.com/code-hud/nestjs-zod-hud/releases/download/v1.2.3/nestjs-zod-1.2.3.tgz"
+  }
+}
+```
+
+Releases are published automatically when a new GitHub Release is created, or manually via the [Release to GitHub](https://github.com/code-hud/nestjs-zod-hud/actions/workflows/release-github.yml) workflow.
+
 ### Manual Setup
 
 1. Install the package:
