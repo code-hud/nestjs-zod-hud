@@ -1,6 +1,7 @@
 import { UnknownSchema } from './types'
 import type * as z3 from 'zod/v3';
 import { toJSONSchema, $ZodType, JSONSchema } from "zod/v4/core";
+import * as zod_v4 from 'zod/v4';
 import { assert } from './assert';
 import { DEFS_KEY, EMPTY_TYPE_KEY, HAS_CONST_KEY, HAS_NULL_KEY, PARENT_ADDITIONAL_PROPERTIES_KEY, PARENT_HAS_REFS_KEY, PARENT_ID_KEY, UNWRAP_ROOT_KEY, SELF_REQUIRED_KEY, PARENT_METADATA_KEY } from './const';
 import { walkJsonSchema } from './utils';
